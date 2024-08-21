@@ -3,77 +3,69 @@
 
 import { useState, useEffect } from "react";
 import { HiChevronDown } from "react-icons/hi"; // Importing down arrow icon from react-icons
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
+import supabase from "@/app/config/supabaseConfig";
+import { useDispatch, useSelector} from 'react-redux';
+import { setPart, filterParts, selectPart } from '../../store/ballJointSlice';
 
-export default function Dashboard() {
+const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredParts, setFilteredParts] = useState([]);
-  const [dropdownFilteredParts, setDropdownFilteredParts] = useState([]); 
+  const [dropdownFilteredParts, setDropdownFilteredParts] = useState([]);
   const [selectedPart1, setSelectedPart1] = useState("");
-  const [carParts, setCarParts] = useState([
-    // Sample data, replace with  data from your database
-    { name: "Air Filter", description: "High-quality air filter", imageUrl: "/images/air-filter.jpg" },
-    { name: "Alternator", description: "Durable alternator", imageUrl: "/images/alternator.jpg" },
-    { name: "Axle", description: "Reliable axle", imageUrl: "/images/axle.jpg" },
-    { name: "Battery", description: "Long-lasting battery", imageUrl: "/images/battery.jpg" },
-    { name: "Brake Pads", description: "High-performance brake pads", imageUrl: "/images/brake-pads.jpg" },
-    { name: "Clutch", description: "Smooth clutch operation", imageUrl: "/images/clutch.jpg" },
-  ]);
-  const [data, setData] = useState([]);
-  setData(data);
+
+  const router = useRouter(); // For navigating to the Card component
+  const dispatch = useDispatch();
+  const ballJointParts = useSelector((state) => state.ballJoint.parts); 
+  const ballFilteredParts = useSelector((state) => state.ballJoint.filteredParts);
 
   useEffect(() => {
-    console.log(data)
-  })
-  // useEffect(() => {  
-  //   if (searchQuery) {
-  //     setFilteredParts(
-  //       carParts.filter((part) =>
-  //         part.name.toLowerCase().startsWith(searchQuery.toLowerCase())
-  //       )
-  //     );
-  //   } else {
-  //     setFilteredParts(carParts);
-  //   }
-  // }, [searchQuery, carParts]);
+    const fetchBallJoint = async () => {
+      const { data, error } = await supabase
+        .from("balljoint")
+        .select(); 
+      if (error) {
+        console.error("Error fetching balljoint:", error);
+        dispatch(setPart(null));
+      } else {
+        if (ballFilteredParts.length === 0) {
+          dispatch(setPart(data));
+        }
+      }
+    }
+    fetchBallJoint();
+  }, [dispatch, ballFilteredParts]);
 
-  // const handleSearch = (e) => {
-  //   setSearchQuery(e.target.value);
+  // const handleDropDownSearchClick = () => {
+  //   let results = ballJointParts;
+
+  //   if (selectedPart1) {
+  //     results = results.filter(
+  //       (part) => part.name.toLowerCase() === selectedPart1.toLowerCase()
+  //     );
+  //   }
+
+  //   setFilteredParts(results);
   // };
-  const router = useRouter(); // For navigating to the Card component
+
+  // const handleResetClick = () => {
+  //   setSelectedPart1("");
+  //   setSearchQuery("");
+  //   setDropdownFilteredParts([]);
+  // };
 
   const handleSearchClick = () => {
-    if (searchQuery) {
-      setFilteredParts(
-        carParts.filter((part) =>
-          part.name.toLowerCase().startsWith(searchQuery.toLowerCase())
-        )
-      );
-    } else {
-      setFilteredParts(carParts);
-    }
-  };
-
-  const handleDropDownSearchClick = () => {
-    let results = carParts;
-
-    if (selectedPart1) {
-      results = results.filter((part) =>
-        part.name.toLowerCase() === selectedPart1.toLowerCase()
-      );
+    if (ballJointParts && searchQuery) {
+      dispatch(filterParts(searchQuery)); // Store the filtered parts in Redux
     } 
-
-    setFilteredParts(results);
   };
 
-  const handleResetClick = () => {
-    setSelectedPart1("");
-    setSearchQuery("");
-    setDropdownFilteredParts([]);
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
   };
-
+  
   const handleMoreClick = (part) => {
-    router.push(`../comps/card?name=${encodeURIComponent(part.name)}&description=${encodeURIComponent(part.description)}&imageUrl=${encodeURIComponent(part.imageUrl)}`);
+    dispatch(selectPart(part)); // Dispatch the action to Redux
+    router.push('../../comps/card'); // Navigate to the card component
   };
 
   return (
@@ -81,36 +73,23 @@ export default function Dashboard() {
       {/* First Column (25% Width) */}
       <div className="w-1/4 bg-gray-800 p-6 flex flex-col justify-between">
         <div>
-          <h1 className="text-white text-2xl font-bold mb-6">Categories</h1>
-          
-          {/* Subheading 1 */}
-          <div className="mb-4">
+          <h1 className="text-white text-xl font-bold mb-6">Categories</h1>
+
+          {/* DropDown Subheading 1 */}
+          {/* <div className="mb-4">
             <h2 className="text-gray-300 text-lg mb-2">Car Marker</h2>
             <div className="relative">
-              <select 
+              <select
                 value={selectedPart1}
                 onChange={(e) => setSelectedPart1(e.target.value)}
-                className="w-full bg-gray-700 text-white p-2 rounded appearance-none ">
+                className="w-full bg-gray-700 text-white p-2 rounded appearance-none "
+              >
                 <option value="">Select a part</option>
-                {carParts.map((part, index) => (
-                    <option key={index} value={part.name}>{part.name}</option>
-                  ))}
-              </select> 
-              <HiChevronDown
-                size={20}
-                className="absolute top-1/2 right-3 transform -translate-y-1/2 text-white pointer-events-none"
-              />
-            </div>
-          </div>
-          
-          {/* Subheading 2 */}
-          {/* <div className="mb-4">
-            <h2 className="text-gray-300 text-lg mb-2">Car Model</h2>
-            <div className="relative">
-              <select className="w-full bg-gray-700 text-white p-2 rounded appearance-none">
-                <option>Option 1</option>
-                <option>Option 2</option>
-                <option>Option 3</option>
+                {ballJointParts.map((part, index) => (
+                  <option key={index} value={part.name}>
+                    {part.name}
+                  </option>
+                ))}
               </select>
               <HiChevronDown
                 size={20}
@@ -118,62 +97,42 @@ export default function Dashboard() {
               />
             </div>
           </div> */}
+
         </div>
 
         {/* Buttons at the Bottom */}
-        <div className="flex space-x-4">
-          <button 
-            onClick={handleResetClick}
-            className="w-1/2 bg-red-600 text-white p-2 rounded hover:bg-red-500"
-            >Reset</button>
+        {/* <div className="flex space-x-4">
           <button
-            onClick={handleDropDownSearchClick} 
-            className="w-1/2 bg-blue-600 text-white p-2 rounded hover:bg-blue-500"
-          >Search</button>
-        </div>
+            onClick={handleResetClick}
+            className="w-1/2 bg-orange-600 text-white p-2 rounded hover:bg-orange-500"
+          >
+            Reset
+          </button>
+          <button
+            onClick={handleDropDownSearchClick}
+            className="w-1/2 bg-green-600 text-white p-2 rounded hover:bg-green-500"
+          >
+            Search
+          </button>
+        </div> */}
       </div>
 
       {/* Second Column (75% Width) */}
-      {/* <div className="w-3/4 bg-gray-700 p-6">
+      <div className="w-3/4 bg-gray-700 p-6">
+        {/* Search Section */}
         <div className="flex mb-6">
           <input
             type="text"
             placeholder="Search product"
             value={searchQuery}
             onChange={handleSearch}
-            className="w-full p-2 rounded-l bg-gray-600 text-white placeholder-gray-400"
-          />
-          <button 
-            className="bg-blue-600 text-white p-2 rounded-r hover:bg-blue-500"
-            onClick={searchQuery}
-          >
-            Search
-          </button>
-        </div>
-
-        
-        <ul className="space-y-2">
-          {filteredParts.map((part, index) => (
-            <li key={index} className="bg-gray-600 p-2 rounded text-white hover:bg-gray-500">
-              {part.name}
-            </li>
-          ))}
-        </ul>
-      </div> */}
-
-      <div className="w-3/4 bg-gray-700 p-6">
-        {/* Search Bar */}
-        <div className="flex mb-6">
-          <input
-            type="text"
-            placeholder="Search product"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full p-2 rounded-l bg-gray-600 text-white placeholder-gray-400"
+            className="w-full p-2 rounded-l focus:outline-green-500
+             bg-gray-600 text-white
+             focus:outline-none placeholder-gray-400"
           />
           <button
             onClick={handleSearchClick}
-            className="bg-blue-600 text-white p-2 rounded-r hover:bg-blue-500"
+            className="bg-green-600 ml-2 text-white p-2 rounded-r hover:bg-green-500"
           >
             Search
           </button>
@@ -181,17 +140,22 @@ export default function Dashboard() {
 
         {/* Filtered List of Car Parts in Grid Format */}
         <div className="grid grid-cols-2 gap-4">
-          {filteredParts.map((part, index) => (
-            <div key={index} className="bg-gray-800 p-4 rounded-lg shadow-lg">
-              <img src={part.imageUrl} alt={part.name} className="w-full h-32 object-cover rounded-t-lg" />
-              <div className="mt-4 text-white">
-                <h3 className="text-xl font-bold">{part.name}</h3>
-                <p className="text-gray-400">{part.description}</p>
+          {ballFilteredParts.map((part, index) => (
+            <div key={index} className="bg-gray-800 p-4 rounded-lg shadow-lg flex flex-col justify-between">
+              <img
+                src={part.image}
+                alt={part.name}
+                className="w-full h-32 object-cover rounded-t-lg"
+              />
+              <div className="mt-2 text-white">
+                <h3 className="text-l font-bold">{part.name}</h3>
+                <p className="text-gray-400">{part.oem_no}</p>
+                <p className="text-gray-400">{part.type}</p>
                 <button
                   onClick={() => handleMoreClick(part)}
-                  className="mt-4 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-500"
+                  className="mt-4 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-500"
                 >
-                  More
+                  More Info
                 </button>
               </div>
             </div>
@@ -201,3 +165,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+export default Dashboard;
