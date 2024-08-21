@@ -2,56 +2,58 @@
 "use client"; // Mark as a Client Component if using the App Router
 
 import { useState, useEffect } from "react";
-import { HiChevronDown } from "react-icons/hi"; // Importing down arrow icon from react-icons
+import { HiChevronDown } from "react-icons/hi"; 
 import { useRouter } from "next/navigation";
 import supabase from "@/app/config/supabaseConfig";
 import { useDispatch, useSelector} from 'react-redux';
 import { setPart, filterParts, selectPart } from '../../store/ballJointSlice';
+import { setCarNames } from "@/app/store/inventorySlice";
 
 const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [dropdownFilteredParts, setDropdownFilteredParts] = useState([]);
-  const [selectedPart1, setSelectedPart1] = useState("");
+  const [dropDownQuery, setDropDownQuery] = useState("");
+  const ballJointParts = useSelector((state) => state.ballJoint.parts); 
+  const carNames = useSelector((state) => state.inventory.carNames); 
+  const ballFilteredParts = useSelector((state) => state.ballJoint.filteredParts);
 
   const router = useRouter(); // For navigating to the Card component
   const dispatch = useDispatch();
-  const ballJointParts = useSelector((state) => state.ballJoint.parts); 
-  const ballFilteredParts = useSelector((state) => state.ballJoint.filteredParts);
 
   useEffect(() => {
+    // balljoint
     const fetchBallJoint = async () => {
       const { data, error } = await supabase
-        .from("balljoint")
-        .select(); 
+        .from("balljoint").select(); 
       if (error) {
         console.error("Error fetching balljoint:", error);
-        dispatch(setPart(null));
       } else {
-        if (ballFilteredParts.length === 0) {
+        if (ballFilteredParts.length === 0 ) {
           dispatch(setPart(data));
         }
       }
     }
+    // inventory
+    const inventory = async () => {
+      const {data, error} =  await supabase
+        .from("inventory").select();
+      if (error) {
+        console.log("Error fetching inventory: ", error);
+      } else {  
+        dispatch(setCarNames(data))
+      }
+    }
+
     fetchBallJoint();
+    inventory();
   }, [dispatch, ballFilteredParts]);
 
-  // const handleDropDownSearchClick = () => {
-  //   let results = ballJointParts;
+  const handleDropDownSearchClick = () => {
+    dispatch(filterParts(dropDownQuery))
+  };
 
-  //   if (selectedPart1) {
-  //     results = results.filter(
-  //       (part) => part.name.toLowerCase() === selectedPart1.toLowerCase()
-  //     );
-  //   }
-
-  //   setFilteredParts(results);
-  // };
-
-  // const handleResetClick = () => {
-  //   setSelectedPart1("");
-  //   setSearchQuery("");
-  //   setDropdownFilteredParts([]);
-  // };
+  const handleResetClick = () => {
+    setDropDownQuery("")
+  };
 
   const handleSearchClick = () => {
     if (ballJointParts && searchQuery) {
@@ -59,10 +61,6 @@ const Dashboard = () => {
     } 
   };
 
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
-  };
-  
   const handleMoreClick = (part) => {
     dispatch(selectPart(part)); // Dispatch the action to Redux
     router.push('../../comps/card'); // Navigate to the card component
@@ -74,37 +72,39 @@ const Dashboard = () => {
       <div className="w-1/4 bg-gray-800 p-6 flex flex-col justify-between">
         <div>
           <h1 className="text-white text-xl font-bold mb-6">Categories</h1>
-
           {/* DropDown Subheading 1 */}
-          {/* <div className="mb-4">
+          <div className="mb-4">
             <h2 className="text-gray-300 text-lg mb-2">Car Marker</h2>
             <div className="relative">
               <select
-                value={selectedPart1}
-                onChange={(e) => setSelectedPart1(e.target.value)}
+                value={dropDownQuery}
+                onChange={(e) => setDropDownQuery(e.target.value)}
                 className="w-full bg-gray-700 text-white p-2 rounded appearance-none "
               >
-                <option value="">Select a part</option>
-                {ballJointParts.map((part, index) => (
+                <option value=""
+                //  onClick={handleDropDownClick}
+                 >
+                  Select a part
+                </option>
+                {carNames.map((part, index) => (
                   <option key={index} value={part.name}>
                     {part.name}
                   </option>
                 ))}
               </select>
               <HiChevronDown
-                size={20}
-                className="absolute top-1/2 right-3 transform -translate-y-1/2 text-white pointer-events-none"
+                size={20} className="absolute top-1/2 right-3
+                 transform -translate-y-1/2 text-white pointer-events-none"
               />
             </div>
-          </div> */}
-
+          </div>
         </div>
 
         {/* Buttons at the Bottom */}
-        {/* <div className="flex space-x-4">
+        <div className="flex space-x-4">
           <button
             onClick={handleResetClick}
-            className="w-1/2 bg-orange-600 text-white p-2 rounded hover:bg-orange-500"
+            className="w-1/2 bg-red-600 text-white p-2 rounded hover:bg-orange-550"
           >
             Reset
           </button>
@@ -114,7 +114,7 @@ const Dashboard = () => {
           >
             Search
           </button>
-        </div> */}
+        </div>
       </div>
 
       {/* Second Column (75% Width) */}
@@ -125,7 +125,7 @@ const Dashboard = () => {
             type="text"
             placeholder="Search product"
             value={searchQuery}
-            onChange={handleSearch}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full p-2 rounded-l focus:outline-green-500
              bg-gray-600 text-white
              focus:outline-none placeholder-gray-400"
@@ -140,7 +140,7 @@ const Dashboard = () => {
 
         {/* Filtered List of Car Parts in Grid Format */}
         <div className="grid grid-cols-2 gap-4">
-          {ballFilteredParts.map((part, index) => (
+          {ballJointParts && ballFilteredParts.map((part, index) => (
             <div key={index} className="bg-gray-800 p-4 rounded-lg shadow-lg flex flex-col justify-between">
               <img
                 src={part.image}

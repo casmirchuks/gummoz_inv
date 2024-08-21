@@ -1,4 +1,3 @@
-// store/partSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
@@ -8,7 +7,7 @@ const initialState = {
 
 };
 
-export const partSlice = createSlice({
+export const ballJointSlice = createSlice({
   name: 'ballJoint', 
   initialState,
   reducers: { 
@@ -28,6 +27,6 @@ export const partSlice = createSlice({
   },
 });
 
-export const { setPart, filterParts, selectPart  } = partSlice.actions;
+export const { setPart, filterParts, selectPart  } = ballJointSlice.actions;
 
-export default partSlice.reducer;
+export default ballJointSlice.reducer;
