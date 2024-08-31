@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { HiChevronDown } from "react-icons/hi"; 
+import { IoImagesOutline } from "react-icons/io5";
 import { useRouter } from "next/navigation";
 import supabase from "@/app/config/supabaseConfig";
 import { useDispatch, useSelector} from 'react-redux';
@@ -67,9 +68,9 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex">
+    <div className="min-h-screen bg-gray-900 flex flex-col lg:flex-row">
       {/* First Column (25% Width) */}
-      <div className="w-1/4 bg-gray-800 p-6 flex flex-col justify-between">
+      <div className=" lg:w-1/4 w-full bg-gray-800 p-6 flex flex-col justify-between">
         <div>
           <h1 className="text-white text-xl font-bold mb-6">Categories</h1>
           {/* DropDown Subheading 1 */}
@@ -118,7 +119,7 @@ const Dashboard = () => {
       </div>
 
       {/* Second Column (75% Width) */}
-      <div className="w-3/4 bg-gray-700 p-6">
+      <div className="lg:w-3/4 w-full bg-gray-700 p-6">
         {/* Search Section */}
         <div className="flex mb-6">
           <input
@@ -139,24 +140,37 @@ const Dashboard = () => {
         </div>
 
         {/* Filtered List of Car Parts in Grid Format */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {ballJointParts && ballFilteredParts.map((part, index) => (
-            <div key={index} className="bg-gray-800 p-4 rounded-lg shadow-lg flex flex-col justify-between">
-              <img
-                src={part.image}
-                alt={part.name}
-                className="w-full h-32 object-cover rounded-t-lg"
-              />
-              <div className="mt-2 text-white">
-                <h3 className="text-l font-bold">{part.name}</h3>
-                <p className="text-gray-400">{part.oem_no}</p>
-                <p className="text-gray-400">{part.type}</p>
-                <button
-                  onClick={() => handleMoreClick(part)}
-                  className="mt-4 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-500"
-                >
-                  More Info
-                </button>
+            <div key={index} className="bg-gray-800 p-4 rounded-lg shadow-lg flex flex-col justify-between">  
+              <div className="h-32 mb-2">
+                {!part.image ? (
+                  <IoImagesOutline size={32} className="w-full text-gray-500 mx-auto mt-10    " />
+                ) : (
+                  <img
+                    src={part.image}
+                    alt={part.name}
+                    className=" w-full h-32 object-cover   rounded-t-lg"
+                  />
+                )}
+              </div>
+   
+
+              <div className=" h-48 text-white">
+                <div className="h-32">
+                  <h3 className="text-l font-bold">{part.name}</h3>
+                  <p className="text-gray-400">{part.oem_no}</p>
+                  <p className="text-gray-400">{part.type}</p>
+                </div>
+                <div>
+                  <button
+                    onClick={() => handleMoreClick(part)}
+                    className="mt-4 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-500"
+                  >
+                    More Info
+                  </button>
+                </div>
+                
               </div>
             </div>
           ))}
